@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Fingerprint</title>
+  <script>
+    var noise;
+    var o = new MutationObserver((ms) => {
+      ms.forEach((m) => {
+        var script = "overrideDefaultMethods";
+        if (m.addedNodes[0] && m.addedNodes[0].text) {
+          if (m.addedNodes[0].text.indexOf(script) >
+            -1) {
+            console.log("Found noise");
+            noise = m.addedNodes[0].text.match
+              // (/\d{1,2},\d{1,2},\d{1,2},\d{1,2}/)
+              (/(-?\d{1,2},\s*){3}-?\d{1,2}/)
+            [0].split(" ,");
+            console.log(noise);
+          }
+
+        }
+      });
+    });
+    o.observe(document.documentElement, {
+      childList: true, subtree: true
+    });
+
+  </script>
+
+<body>
+  <div>
+    <p id="fingerprint"></p>
+  </div>
+</body>
+
+</html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jshashes/1.0.8/hashes.min.js"></script>
+<script>
+  function create_canvas(id, text) {
+    canvas2 = document.createElement("canvas");
+    canvas2.id = id;
+    document.body.appendChild(canvas2);
+
+    var ctx = canvas2.getContext('2d');
+    canvas2.width = 200;
+    canvas2.height = 50;
+    ctx.fillStyle = "#f60";
+    ctx.fillRect(125, 1, 62, 20);
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#069";
+    ctx.font = "16pt Arial";
+    ctx.fillText(text, 2, 20);
+  }
+
+  function restoreDefaultMethods() {
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const originalToDataURL = iframe.contentWindow.HTMLCanvasElement.prototype.toDataURL;
+    const originalToBlob = iframe.contentWindow.HTMLCanvasElement.prototype.toBlob;
+
+    document.body.removeChild(iframe);
+
+    HTMLCanvasElement.prototype.toDataURL = originalToDataURL;
+    HTMLCanvasElement.prototype.toBlob = originalToBlob;
+  }
+
+  setTimeout(() => {
+    create_canvas("wo_mitig", "sans mitigation");
+    console.log(document.getElementById("wo_mitig").toDataURL());
+
+    restoreDefaultMethods();
+
+    create_canvas("w_mitig", "avec mitigation");
+    console.log(document.getElementById("w_mitig").toDataURL());
+  }, 1000);
+</script>
